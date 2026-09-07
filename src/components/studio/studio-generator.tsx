@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { BUILTIN_TEMPLATES } from "@/core/templates/catalog";
 import {
   TemplateDefinition,
@@ -16,12 +17,16 @@ import {
   Sparkles,
   Download,
   Archive,
+  Palette,
   CheckCircle2,
   RefreshCw,
-  Sliders,
-  Layers,
-  Check,
-  AlertCircle,
+  LayoutGrid,
+  Square,
+  Smartphone,
+  Maximize2,
+  ArrowRight,
+  ShieldCheck,
+  Zap,
 } from "lucide-react";
 
 interface StudioGeneratorProps {
@@ -35,91 +40,123 @@ interface StudioGeneratorProps {
   initialCredits: number;
 }
 
+// Crisp base64 sample textures so the user sees live branded outputs immediately
+const SAMPLE_PRESETS = [
+  {
+    id: "apparel",
+    label: "Fashion / Apparel",
+    icon: "👕",
+    dataUrl: `data:image/svg+xml;base64,${btoa(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+        <defs>
+          <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1e293b"/>
+            <stop offset="100%" stop-color="#0f172a"/>
+          </linearGradient>
+        </defs>
+        <rect width="1200" height="1200" fill="url(#bg)"/>
+        <circle cx="600" cy="520" r="320" fill="#3b82f6" opacity="0.25"/>
+        <circle cx="600" cy="520" r="240" fill="#3b82f6" opacity="0.4"/>
+        <path d="M480 400 L720 400 L840 520 L760 580 L700 520 L700 800 L500 800 L500 520 L440 580 L360 520 Z" fill="#ffffff" opacity="0.9"/>
+        <text x="600" y="920" font-family="sans-serif" font-size="44" font-weight="bold" fill="#94a3b8" text-anchor="middle">Premium Cotton Crewneck</text>
+      </svg>
+    `)}`,
+  },
+  {
+    id: "food",
+    label: "Artisan Coffee / Food",
+    icon: "☕",
+    dataUrl: `data:image/svg+xml;base64,${btoa(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+        <defs>
+          <linearGradient id="food-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#2d1b14"/>
+            <stop offset="100%" stop-color="#180e0a"/>
+          </linearGradient>
+        </defs>
+        <rect width="1200" height="1200" fill="url(#food-bg)"/>
+        <circle cx="600" cy="540" r="340" fill="#78350f" opacity="0.3"/>
+        <circle cx="600" cy="540" r="260" fill="#d97706" opacity="0.4"/>
+        <circle cx="600" cy="540" r="180" fill="#fef3c7" opacity="0.9"/>
+        <circle cx="600" cy="540" r="140" fill="#78350f" opacity="0.85"/>
+        <text x="600" y="940" font-family="sans-serif" font-size="44" font-weight="bold" fill="#fef3c7" text-anchor="middle">Single Origin Roasted Espresso</text>
+      </svg>
+    `)}`,
+  },
+  {
+    id: "tech",
+    label: "Minimal Tech",
+    icon: "📱",
+    dataUrl: `data:image/svg+xml;base64,${btoa(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+        <defs>
+          <linearGradient id="tech-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#09090b"/>
+            <stop offset="100%" stop-color="#18181b"/>
+          </linearGradient>
+        </defs>
+        <rect width="1200" height="1200" fill="url(#tech-bg)"/>
+        <rect x="420" y="320" width="360" height="560" rx="48" fill="#27272a" stroke="#3f3f46" stroke-width="8"/>
+        <rect x="450" y="360" width="300" height="480" rx="32" fill="#10b981" opacity="0.3"/>
+        <circle cx="600" cy="600" r="70" fill="#10b981"/>
+        <text x="600" y="980" font-family="sans-serif" font-size="44" font-weight="bold" fill="#a1a1aa" text-anchor="middle">Smart Device Ultra</text>
+      </svg>
+    `)}`,
+  },
+];
+
 export function StudioGenerator({
   workspaceId,
   brand,
   brandKit,
   initialCredits,
 }: StudioGeneratorProps) {
+  // Pre-load first sample so the user instantly sees the branded experience!
+  const [userImageBase64, setUserImageBase64] = useState<string>(
+    SAMPLE_PRESETS[0].dataUrl,
+  );
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateDefinition>(
     BUILTIN_TEMPLATES[0],
   );
-  const [selectedRatio, setSelectedRatio] =
+  const [viewMode, setViewMode] = useState<"grid" | "focused">("grid");
+  const [focusedRatio, setFocusedRatio] =
     useState<AspectRatioKey>("SQUARE_1_1");
-  const [userImageBase64, setUserImageBase64] = useState<string | null>(null);
 
-  // Overrides
+  // Simple copy controls
   const [headline, setHeadline] = useState("Discover Summer Essentials 2026");
-  const [subheadline, setSubheadline] = useState(
-    "Handcrafted quality designed for everyday comfort.",
+  const [ctaText, setCtaText] = useState(
+    brandKit.defaultCta || "Shop Collection",
   );
-  const [ctaText, setCtaText] = useState("Shop Collection");
 
-  // State
+  // Action status
   const [isGenerating, setIsGenerating] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [completedGeneration, setCompletedGeneration] = useState<any | null>(
     null,
   );
   const [credits, setCredits] = useState(initialCredits);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Sample quick images
-  const sampleImages = [
-    {
-      label: "Fashion / Apparel",
-      data: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='1200'><rect width='1200' height='1200' fill='%231e293b'/><circle cx='600' cy='500' r='320' fill='%233b82f6'/><rect x='350' y='700' width='500' height='380' rx='60' fill='%2360a5fa'/></svg>",
-    },
-    {
-      label: "Artisan Coffee / Food",
-      data: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='1200'><rect width='1200' height='1200' fill='%2327170f'/><circle cx='600' cy='600' r='380' fill='%2378350f'/><circle cx='600' cy='600' r='280' fill='%23d97706'/></svg>",
-    },
-    {
-      label: "Minimalist Tech",
-      data: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='1200'><rect width='1200' height='1200' fill='%2309090b'/><rect x='300' y='300' width='600' height='600' rx='40' fill='%2318181b' stroke='%2327272a' stroke-width='10'/><circle cx='600' cy='600' r='140' fill='%2310b981'/></svg>",
-    },
-  ];
-
-  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = () => {
       setUserImageBase64(reader.result as string);
+      setCompletedGeneration(null);
+      setErrorMessage(null);
     };
     reader.readAsDataURL(file);
   }
 
   const overrides: GenerationOverrides = {
     headline,
-    subheadline,
     ctaText,
   };
 
-  const activeLayout = selectedTemplate.layouts[selectedRatio];
-
-  // Calculate zoom factor to fit comfortable preview container
-  const maxPreviewWidth = 480;
-  const zoomLevel = Math.min(1, maxPreviewWidth / activeLayout.width);
-
-  async function handleGenerate() {
-    if (!userImageBase64) {
-      setErrorMsg(
-        "Please upload an image or choose one of the sample textures below first.",
-      );
-      return;
-    }
-
-    if (credits < 1) {
-      setErrorMsg(
-        "You have 0 credits remaining. Please recharge your balance to continue.",
-      );
-      return;
-    }
-
+  async function handleBatchGenerateAndDownload() {
     setIsGenerating(true);
-    setErrorMsg(null);
-    setCompletedGeneration(null);
+    setErrorMessage(null);
 
     try {
       const res = await generateSocialFormatsAction({
@@ -133,322 +170,395 @@ export function StudioGenerator({
 
       if (res.success && res.data) {
         setCompletedGeneration(res.data);
-        setCredits((prev) => Math.max(0, prev - 1));
+        setCredits((c) => Math.max(0, c - 1));
+
+        // Trigger download of the ZIP bundle automatically!
+        const zipUrl = `/api/exports/${res.data.id}/zip`;
+        const link = document.createElement("a");
+        link.href = zipUrl;
+        link.download = `${brand.name.toLowerCase()}-branded-assets.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       } else {
-        setErrorMsg(res.error || "Generation failed. Please try again.");
+        setErrorMessage(res.error || "Generation failed. Please try again.");
       }
     } catch (err: any) {
-      setErrorMsg(
-        err.message || "An unexpected error occurred during generation.",
-      );
+      setErrorMessage(err.message || "An unexpected error occurred.");
     } finally {
       setIsGenerating(false);
     }
   }
 
+  const ratios: AspectRatioKey[] = [
+    "SQUARE_1_1",
+    "STORY_9_16",
+    "PORTRAIT_4_5",
+    "LANDSCAPE_16_9",
+  ];
+
   return (
-    <div className="space-y-8 pb-16">
-      {/* Studio Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Social Content Studio
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Upload your photo, choose a layout, customize text, and generate 4
-            branded social formats in seconds.
-          </p>
+    <div className="space-y-6 pb-20">
+      {/* 1. Core Brand Kit Status Ribbon */}
+      <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+            <Zap className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-slate-900">
+                {brand.name}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                <CheckCircle2 className="h-3 w-3" /> Brand Kit Active
+              </span>
+            </div>
+            <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
+              <span>Auto-applies palette:</span>
+              <span
+                className="h-3 w-3 rounded-full border border-slate-300"
+                style={{ backgroundColor: brandKit.primaryColor }}
+                title="Primary"
+              />
+              <span
+                className="h-3 w-3 rounded-full border border-slate-300"
+                style={{ backgroundColor: brandKit.secondaryColor }}
+                title="Secondary"
+              />
+              <span
+                className="h-3 w-3 rounded-full border border-slate-300"
+                style={{ backgroundColor: brandKit.accentColor }}
+                title="Accent"
+              />
+              <span className="text-slate-300">•</span>
+              <span>{brandKit.headingFont} Font</span>
+              {brandKit.watermarkEnabled && (
+                <>
+                  <span className="text-slate-300">•</span>
+                  <span className="flex items-center gap-1 text-slate-600">
+                    <ShieldCheck className="h-3 w-3 text-blue-600" /> Watermark
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
-        <button
-          onClick={handleGenerate}
-          disabled={isGenerating}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-md hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 transition-all cursor-pointer"
+        <Link
+          href="/dashboard/brand"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-700 transition-colors shrink-0"
         >
-          {isGenerating ? (
-            <>
-              <RefreshCw className="h-4 w-4 animate-spin" /> Rendering All 4
-              Formats...
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4" /> Generate All Formats (1 Credit)
-            </>
-          )}
-        </button>
+          <Palette className="h-3.5 w-3.5 text-blue-600" /> Edit Brand Kit
+        </Link>
       </div>
 
-      {errorMsg && (
-        <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-          <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
-          <span>{errorMsg}</span>
+      {/* 2. Hero USP & Upload Bar */}
+      <div className="text-center max-w-3xl mx-auto pt-2 pb-4 space-y-2">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+          “Set your brand once. Brand every content automatically.”
+        </h1>
+        <p className="text-sm text-slate-500">
+          Upload any photo and instantly generate all social media formats
+          branded with your exact colors, fonts, handles, and watermark.
+        </p>
+      </div>
+
+      {/* 3. Streamlined Control Bar: Upload, Template, and Copy Inputs */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+          {/* A. Upload / Sample button (4 cols) */}
+          <div className="md:col-span-4 flex flex-col gap-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              1. Your Content Image
+            </label>
+            <div className="flex items-center gap-2">
+              <label className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50/50 hover:bg-blue-50 px-4 py-2.5 text-xs font-semibold text-blue-700 cursor-pointer transition-colors">
+                <Upload className="h-4 w-4 text-blue-600" />
+                <span>Upload New Photo</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
+            {/* Quick Presets */}
+            <div className="flex items-center gap-1.5 pt-1">
+              <span className="text-[11px] text-slate-400">Samples:</span>
+              {SAMPLE_PRESETS.map((sample) => (
+                <button
+                  key={sample.id}
+                  onClick={() => setUserImageBase64(sample.dataUrl)}
+                  className={`rounded-lg px-2 py-1 text-[11px] font-medium transition-colors cursor-pointer ${
+                    userImageBase64 === sample.dataUrl
+                      ? "bg-blue-600 text-white font-semibold shadow-2xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {sample.icon} {sample.label.split("/")[0]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* B. Template Switcher (4 cols) */}
+          <div className="md:col-span-4 flex flex-col gap-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              2. Template Style
+            </label>
+            <div className="flex rounded-xl bg-slate-100 p-1">
+              {BUILTIN_TEMPLATES.map((tpl) => (
+                <button
+                  key={tpl.id}
+                  onClick={() => setSelectedTemplate(tpl)}
+                  className={`flex-1 rounded-lg py-2 text-xs font-medium transition-all cursor-pointer truncate px-2 ${
+                    selectedTemplate.id === tpl.id
+                      ? "bg-white text-slate-900 font-bold shadow-2xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                  title={tpl.name}
+                >
+                  {tpl.name.split(" ")[0]} {tpl.name.split(" ")[1]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* C. Primary Action: 1-Click Generate & Download ZIP (4 cols) */}
+          <div className="md:col-span-4 flex flex-col gap-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              3. Automatic Export
+            </label>
+            <button
+              onClick={handleBatchGenerateAndDownload}
+              disabled={isGenerating}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-500/20 hover:from-blue-700 hover:to-violet-700 disabled:opacity-50 transition-all cursor-pointer"
+            >
+              {isGenerating ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" /> Rendering All 4
+                  Formats...
+                </>
+              ) : (
+                <>
+                  <Archive className="h-4 w-4" /> Download All Formats (ZIP)
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Quick Inline Headline & CTA Inputs */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-100">
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-500 uppercase mb-1">
+              Post Headline
+            </label>
+            <input
+              type="text"
+              value={headline}
+              onChange={(e) => setHeadline(e.target.value)}
+              placeholder="Post Headline"
+              className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-500 uppercase mb-1">
+              Button CTA Text
+            </label>
+            <input
+              type="text"
+              value={ctaText}
+              onChange={(e) => setCtaText(e.target.value)}
+              placeholder="e.g. Shop Now"
+              className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      {errorMessage && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700">
+          {errorMessage}
         </div>
       )}
 
-      {/* Main Studio Workspace: 2-Column Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* LEFT COLUMN: Controls & Customization (5 Cols) */}
-        <div className="lg:col-span-5 space-y-6">
-          {/* Step 1: Upload Media */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Step 1: Content Image
-              </span>
-              {userImageBase64 && (
-                <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-semibold">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Image Selected
-                </span>
-              )}
-            </div>
-
-            <label className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-6 text-center hover:bg-slate-50 cursor-pointer transition-colors">
-              <Upload className="h-8 w-8 text-slate-400 mb-2" />
-              <span className="text-sm font-semibold text-slate-700">
-                Click to upload product/photo
-              </span>
-              <span className="text-xs text-slate-400 mt-1">
-                PNG, JPG, or WebP (recommended 1200x1200px+)
-              </span>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-            </label>
-
-            {/* Quick Sample Presets */}
-            <div>
-              <span className="text-xs text-slate-500 font-medium block mb-2">
-                Or quick test with sample photo:
-              </span>
-              <div className="flex flex-wrap gap-2">
-                {sampleImages.map((s, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setUserImageBase64(s.data)}
-                    className="rounded-lg border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200 transition-colors"
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Step 2: Choose Template */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Step 2: Template
-              </span>
-              <span className="text-xs text-slate-400 font-medium">
-                {BUILTIN_TEMPLATES.length} templates
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 gap-2.5">
-              {BUILTIN_TEMPLATES.map((tpl) => {
-                const isSelected = selectedTemplate.id === tpl.id;
-                return (
-                  <button
-                    key={tpl.id}
-                    type="button"
-                    onClick={() => setSelectedTemplate(tpl)}
-                    className={`flex items-start text-left gap-3.5 rounded-xl border p-3.5 transition-all cursor-pointer ${
-                      isSelected
-                        ? "border-blue-600 bg-blue-50/50 shadow-sm"
-                        : "border-slate-200 hover:border-slate-300 bg-white"
-                    }`}
-                  >
-                    <div
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                        isSelected
-                          ? "bg-blue-600 text-white"
-                          : "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      <Layers className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-slate-900">
-                          {tpl.name}
-                        </span>
-                        {isSelected && (
-                          <Check className="h-4 w-4 text-blue-600 shrink-0" />
-                        )}
-                      </div>
-                      <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">
-                        {tpl.description}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Step 3: Text & Copy Customization */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-              Step 3: Post Content & Overrides
+      {/* 4. Format View Controls & Live Branded Social Assets */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Live Branded Outputs
             </span>
+            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+              4 Formats
+            </span>
+          </div>
 
-            <div className="space-y-3.5">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  Main Headline
-                </label>
-                <input
-                  type="text"
-                  value={headline}
-                  onChange={(e) => setHeadline(e.target.value)}
-                  placeholder="e.g. Summer Essentials 2026"
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  Button Call-To-Action (CTA)
-                </label>
-                <input
-                  type="text"
-                  value={ctaText}
-                  onChange={(e) => setCtaText(e.target.value)}
-                  placeholder="e.g. Shop Now"
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
+          <div className="flex items-center gap-1 rounded-xl bg-slate-200/70 p-1">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                viewMode === "grid"
+                  ? "bg-white text-slate-900 shadow-2xs font-semibold"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              <span>Grid View</span>
+            </button>
+            <button
+              onClick={() => setViewMode("focused")}
+              className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                viewMode === "focused"
+                  ? "bg-white text-slate-900 shadow-2xs font-semibold"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <Maximize2 className="h-3.5 w-3.5" />
+              <span>Single Focus</span>
+            </button>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Live Interactive Preview (7 Cols) */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="rounded-2xl border border-slate-200 bg-slate-100/60 p-5 shadow-sm">
-            {/* Aspect Ratio Switcher Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-4 mb-4">
-              <div className="flex items-center gap-1.5 bg-slate-200/70 p-1 rounded-xl">
-                {(Object.keys(ASPECT_RATIOS) as AspectRatioKey[]).map((key) => {
-                  const meta = ASPECT_RATIOS[key];
-                  const isSelected = selectedRatio === key;
+        {/* VIEW 1: ALL 4 FORMATS GRID VIEW */}
+        {viewMode === "grid" ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-start">
+            {ratios.map((ratioKey) => {
+              const meta = ASPECT_RATIOS[ratioKey];
+              const layout = selectedTemplate.layouts[ratioKey];
+
+              // Target preview box width
+              const previewBoxWidth = 260;
+              const zoom = previewBoxWidth / layout.width;
+
+              return (
+                <div
+                  key={ratioKey}
+                  className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm space-y-3 flex flex-col justify-between"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-xs font-bold text-slate-900">
+                          {meta.badge} {meta.label}
+                        </span>
+                        <span className="text-[10px] text-slate-400 block">
+                          {meta.sublabel}
+                        </span>
+                      </div>
+                      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-mono text-slate-500">
+                        {layout.width}x{layout.height}
+                      </span>
+                    </div>
+
+                    {/* Canvas Preview Container */}
+                    <div className="rounded-xl bg-slate-100/60 p-2 flex items-center justify-center overflow-hidden min-h-[300px]">
+                      <CanvasPreview
+                        layout={layout}
+                        brandKit={brandKit}
+                        userImageBase64={userImageBase64}
+                        overrides={overrides}
+                        brandName={brand.name}
+                        zoomLevel={zoom}
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleBatchGenerateAndDownload}
+                    disabled={isGenerating}
+                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    <Download className="h-3.5 w-3.5 text-slate-500" /> Download{" "}
+                    {meta.badge} PNG
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* VIEW 2: FOCUSED SINGLE VIEW */
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                {ratios.map((ratioKey) => {
+                  const meta = ASPECT_RATIOS[ratioKey];
+                  const isSelected = focusedRatio === ratioKey;
                   return (
                     <button
-                      key={key}
-                      type="button"
-                      onClick={() => setSelectedRatio(key)}
-                      className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                      key={ratioKey}
+                      onClick={() => setFocusedRatio(ratioKey)}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                         isSelected
-                          ? "bg-white text-slate-900 shadow-sm font-semibold"
-                          : "text-slate-600 hover:text-slate-900"
+                          ? "bg-slate-900 text-white font-bold"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                       }`}
                     >
-                      <span>{meta.badge}</span>
-                      <span className="hidden sm:inline">{meta.label}</span>
+                      {meta.badge} {meta.label}
                     </button>
                   );
                 })}
               </div>
 
-              <span className="text-xs text-slate-400 font-mono">
-                {activeLayout.width} x {activeLayout.height}px
-              </span>
+              <button
+                onClick={handleBatchGenerateAndDownload}
+                disabled={isGenerating}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors"
+              >
+                <Download className="h-3.5 w-3.5" /> Download HD PNG
+              </button>
             </div>
 
-            {/* Live Canvas */}
-            <div className="flex items-center justify-center min-h-[500px] overflow-hidden">
+            <div className="flex items-center justify-center min-h-[500px] bg-slate-100/50 rounded-xl p-4 overflow-hidden">
               <CanvasPreview
-                layout={activeLayout}
+                layout={selectedTemplate.layouts[focusedRatio]}
                 brandKit={brandKit}
                 userImageBase64={userImageBase64}
                 overrides={overrides}
                 brandName={brand.name}
-                zoomLevel={zoomLevel}
+                zoomLevel={Math.min(
+                  1,
+                  460 / selectedTemplate.layouts[focusedRatio].width,
+                )}
               />
             </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* COMPLETED GENERATIONS SECTION */}
+      {/* 5. Completed Export Alert if ready */}
       {completedGeneration && (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-6 shadow-sm space-y-6 animate-in fade-in duration-300">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-emerald-200 pb-4">
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0" />
             <div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                <h2 className="text-lg font-bold text-slate-900">
-                  Generation Ready: All 4 Formats Created!
-                </h2>
-              </div>
-              <p className="text-xs text-slate-600 mt-0.5">
-                Pixel-perfect PNGs rendered server-side with Sharp and stored in
-                cloud storage.
+              <h4 className="text-sm font-bold text-slate-900">
+                All 4 Formats Successfully Generated!
+              </h4>
+              <p className="text-xs text-slate-600">
+                Your ZIP bundle download has started. You can also re-download
+                any format from History.
               </p>
             </div>
+          </div>
 
-            {/* Download All as ZIP Button */}
+          <div className="flex items-center gap-2">
             <a
               href={`/api/exports/${completedGeneration.id}/zip`}
               download
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition-colors"
             >
-              <Archive className="h-4 w-4" /> Download All (ZIP Bundle)
+              <Archive className="h-3.5 w-3.5" /> Re-download ZIP
             </a>
-          </div>
-
-          {/* Export Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {completedGeneration.exports?.map((exp: any) => {
-              const meta = ASPECT_RATIOS[exp.aspectRatio as AspectRatioKey] || {
-                badge: exp.aspectRatio,
-                label: exp.aspectRatio,
-              };
-
-              return (
-                <div
-                  key={exp.id}
-                  className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm space-y-3 flex flex-col justify-between"
-                >
-                  <div className="space-y-2">
-                    <div className="relative aspect-square w-full rounded-lg bg-slate-100 overflow-hidden border border-slate-100 flex items-center justify-center">
-                      <img
-                        src={exp.url}
-                        alt={meta.label}
-                        className="h-full w-full object-contain"
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-900">
-                          {meta.badge} {meta.label}
-                        </span>
-                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-mono text-slate-600">
-                          {exp.width}x{exp.height}
-                        </span>
-                      </div>
-                      <span className="text-[11px] text-slate-400 block mt-0.5">
-                        {(exp.fileSizeBytes / 1024).toFixed(1)} KB •{" "}
-                        {exp.renderTimeMs || 120}ms
-                      </span>
-                    </div>
-                  </div>
-
-                  <a
-                    href={exp.url}
-                    download={`brandflow-${exp.aspectRatio.toLowerCase()}.png`}
-                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
-                  >
-                    <Download className="h-3.5 w-3.5 text-slate-500" /> Download
-                    PNG
-                  </a>
-                </div>
-              );
-            })}
+            <Link
+              href="/dashboard/history"
+              className="inline-flex items-center gap-1 rounded-xl border border-emerald-200 bg-white px-3.5 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-50 transition-colors"
+            >
+              View History <ArrowRight className="h-3 w-3" />
+            </Link>
           </div>
         </div>
       )}
