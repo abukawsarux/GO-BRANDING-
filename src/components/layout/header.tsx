@@ -2,14 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Sparkles,
-  Palette,
-  Layers,
-  History,
-  Coins,
-  Image as ImageIcon,
-} from "lucide-react";
+import { Sparkles, Palette, Layers, History, Coins } from "lucide-react";
 
 interface HeaderProps {
   workspaceName: string;
@@ -25,7 +18,7 @@ export function DashboardHeader({
   const pathname = usePathname();
 
   const navItems = [
-    { label: "Studio", href: "/dashboard/studio", icon: Sparkles },
+    { label: "Studio", href: "/", icon: Sparkles },
     { label: "Brand Kit", href: "/dashboard/brand", icon: Palette },
     { label: "Templates", href: "/dashboard/templates", icon: Layers },
     { label: "History", href: "/dashboard/history", icon: History },
@@ -36,7 +29,7 @@ export function DashboardHeader({
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* BrandFlow Logo & Workspace Context */}
         <div className="flex items-center gap-6">
-          <Link href="/dashboard/studio" className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-500 text-white shadow-md shadow-blue-500/20">
               <Sparkles className="h-5 w-5" />
             </div>
@@ -64,7 +57,10 @@ export function DashboardHeader({
         <nav className="flex items-center gap-1 sm:gap-2">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname.startsWith(item.href);
+            const isActive =
+              item.href === "/"
+                ? pathname === "/" || pathname === "/dashboard/studio"
+                : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}
