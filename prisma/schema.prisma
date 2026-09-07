@@ -1,0 +1,351 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// -------------------------------------------------------------
+// USER & MULTI-TENANCY
+// -------------------------------------------------------------
+
+enum UserRole {
+  USER
+  SUPER_ADMIN
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+model User {
+  id            String            @id @default(cuid())
+  name          String?
+  email         String            @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  role          UserRole          @default(USER)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  memberships   WorkspaceMember[]
+  createdAssets Asset[]
+
+  @@index([email])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum PlanTier {
+  FREE
+  STARTER
+  PRO
+  AGENCY
+}
+
+enum SubscriptionStatus {
+  INACTIVE
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+model Workspace {
+  id                   String             @id @default(cuid())
+  name                 String
+  slug                 String             @unique
+  logoUrl              String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  // Billing & Subscriptions
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  planTier             PlanTier           @default(FREE)
+  subscriptionStatus   SubscriptionStatus @default(INACTIVE)
+  currentPeriodEnd     DateTime?
+
+  members              WorkspaceMember[]
+  brands               Brand[]
+  assets               Asset[]
+  templates            Template[]
+  generations          Generation[]
+  creditLedger         CreditLedger[]
+  creditBalance        CreditBalance?
+
+  @@index([slug])
+}
+
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        WorkspaceRole @default(MEMBER)
+  createdAt   DateTime      @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+  @@index([workspaceId])
+}
+
+// -------------------------------------------------------------
+// BRAND & BRAND KIT
+// -------------------------------------------------------------
+
+model Brand {
+  id          String    @id @default(cuid())
+  workspaceId String
+  name        String
+  slug        String
+  description String?
+  isDefault   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  brandKit    BrandKit?
+  assets      Asset[]
+  generations Generation[]
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId])
+}
+
+enum WatermarkPosition {
+  TOP_LEFT
+  TOP_RIGHT
+  BOTTOM_LEFT
+  BOTTOM_RIGHT
+  CENTER
+}
+
+model BrandKit {
+  id                String            @id @default(cuid())
+  brandId           String            @unique
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  // Logos
+  primaryLogoUrl    String?
+  darkLogoUrl       String?
+  whiteLogoUrl      String?
+  iconLogoUrl       String?
+
+  // Color Palette
+  primaryColor      String            @default("#0F172A")
+  secondaryColor    String            @default("#3B82F6")
+  accentColor       String            @default("#10B981")
+  backgroundColor   String            @default("#FFFFFF")
+  textColor         String            @default("#1E293B")
+
+  // Typography
+  headingFont       String            @default("Inter")
+  bodyFont          String            @default("Inter")
+
+  // Business Details & Socials
+  website           String?
+  phone             String?
+  email             String?
+  defaultCta        String            @default("Learn More")
+
+  instagramHandle   String?
+  facebookHandle    String?
+  tiktokHandle      String?
+  twitterHandle     String?
+  linkedinHandle    String?
+
+  // Watermark Settings
+  watermarkEnabled  Boolean           @default(false)
+  watermarkUrl      String?
+  watermarkPosition WatermarkPosition @default(BOTTOM_RIGHT)
+  watermarkOpacity  Float             @default(0.8)
+
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+}
+
+// -------------------------------------------------------------
+// MEDIA ASSETS
+// -------------------------------------------------------------
+
+enum AssetType {
+  IMAGE
+  LOGO
+  VIDEO
+}
+
+model Asset {
+  id          String    @id @default(cuid())
+  workspaceId String
+  brandId     String?
+  uploaderId  String?
+  name        String
+  fileKey     String    @unique
+  url         String
+  mimeType    String
+  sizeBytes   Int
+  width       Int?
+  height      Int?
+  type        AssetType @default(IMAGE)
+  createdAt   DateTime  @default(now())
+
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  brand       Brand?       @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  uploader    User?        @relation(fields: [uploaderId], references: [id], onDelete: SetNull)
+  generations Generation[]
+
+  @@index([workspaceId])
+  @@index([brandId])
+}
+
+// -------------------------------------------------------------
+// TEMPLATES & GENERATIONS
+// -------------------------------------------------------------
+
+enum AspectRatio {
+  SQUARE_1_1     // 1080x1080
+  STORY_9_16     // 1080x1920
+  PORTRAIT_4_5   // 1080x1350
+  LANDSCAPE_16_9 // 1920x1080
+}
+
+model Template {
+  id              String        @id @default(cuid())
+  workspaceId     String?
+  name            String
+  category        String
+  description     String?
+  thumbnailUrl    String
+  isSystem        Boolean       @default(false)
+  schemaJson      Json
+  supportedRatios AspectRatio[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  workspace   Workspace?   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  generations Generation[]
+
+  @@index([category])
+  @@index([workspaceId])
+}
+
+enum GenerationStatus {
+  DRAFT
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Generation {
+  id              String            @id @default(cuid())
+  workspaceId     String
+  brandId         String
+  templateId      String
+  sourceAssetId   String?
+  title           String            @default("Untitled Post")
+  status          GenerationStatus  @default(DRAFT)
+  customOverrides Json?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  workspace       Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  brand           Brand             @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  template        Template          @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  sourceAsset     Asset?            @relation(fields: [sourceAssetId], references: [id], onDelete: SetNull)
+  exports         GeneratedExport[]
+
+  @@index([workspaceId])
+  @@index([brandId])
+}
+
+model GeneratedExport {
+  id            String      @id @default(cuid())
+  generationId  String
+  aspectRatio   AspectRatio
+  fileKey       String      @unique
+  url           String
+  width         Int
+  height        Int
+  fileSizeBytes Int
+  format        String      @default("png")
+  renderTimeMs  Int?
+  createdAt     DateTime    @default(now())
+
+  generation    Generation  @relation(fields: [generationId], references: [id], onDelete: Cascade)
+
+  @@index([generationId])
+}
+
+// -------------------------------------------------------------
+// CREDITS & BILLING
+// -------------------------------------------------------------
+
+model CreditBalance {
+  id          String    @id @default(cuid())
+  workspaceId String    @unique
+  credits     Int       @default(20)
+  updatedAt   DateTime  @updatedAt
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+enum CreditTransactionType {
+  SIGNUP_BONUS
+  MONTHLY_GRANT
+  PURCHASE_TOPUP
+  IMAGE_RENDER
+  VIDEO_RENDER
+  REFUND_FAILED_RENDER
+}
+
+model CreditLedger {
+  id           String                @id @default(cuid())
+  workspaceId  String
+  amount       Int
+  balanceAfter Int
+  type         CreditTransactionType
+  description  String
+  referenceId  String?
+  createdAt    DateTime              @default(now())
+
+  workspace    Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+}
+
