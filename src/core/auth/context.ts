@@ -2,36 +2,37 @@ import prisma from "@/lib/prisma";
 
 const FALLBACK_WORKSPACE = {
   id: "demo-workspace-id",
-  name: "Acme Creative Studio",
-  slug: "acme-studio",
-  creditBalance: { credits: 50 },
+  name: "Urban Wear",
+  slug: "urban-wear",
+  planTier: "PRO",
+  creditBalance: { credits: 10 },
   brands: [
     {
       id: "demo-brand-id",
-      name: "Lumina Lifestyle",
-      slug: "lumina-lifestyle",
+      name: "Urban Wear",
+      slug: "urban-wear",
       isDefault: true,
       brandKit: {
         id: "demo-kit-id",
         brandId: "demo-brand-id",
-        primaryColor: "#0F172A",
-        secondaryColor: "#3B82F6",
-        accentColor: "#F59E0B",
+        primaryColor: "#000000",
+        secondaryColor: "#FF5A36",
+        accentColor: "#3B82F6",
         backgroundColor: "#FFFFFF",
         textColor: "#0F172A",
-        headingFont: "Inter",
+        headingFont: "Montserrat",
         bodyFont: "Inter",
         primaryLogoUrl: null,
         darkLogoUrl: null,
         whiteLogoUrl: null,
         iconLogoUrl: null,
-        website: "https://luminacraft.co",
-        phone: "+1 (555) 019-2834",
-        email: "hello@luminacraft.co",
-        defaultCta: "Shop New Drop",
-        instagramHandle: "@luminacraft",
-        facebookHandle: "luminacraft",
-        tiktokHandle: "@luminacraft",
+        website: "urbanwear.co",
+        phone: "+880 1712 345678",
+        email: "hello@urbanwear.co",
+        defaultCta: "SHOP NOW",
+        instagramHandle: "@urbanwear",
+        facebookHandle: "urbanwear",
+        tiktokHandle: "@urbanwear",
         twitterHandle: null,
         linkedinHandle: null,
         watermarkEnabled: true,
@@ -61,31 +62,33 @@ export async function getOrCreateDefaultWorkspace() {
     if (!workspace) {
       workspace = await prisma.workspace.create({
         data: {
-          name: "Acme Creative Studio",
-          slug: "acme-studio",
+          name: "Urban Wear",
+          slug: "urban-wear",
           creditBalance: {
             create: {
-              credits: 50,
+              credits: 10,
             },
           },
           brands: {
             create: {
-              name: "Lumina Lifestyle",
-              slug: "lumina-lifestyle",
+              name: "Urban Wear",
+              slug: "urban-wear",
               isDefault: true,
               brandKit: {
                 create: {
-                  primaryColor: "#0F172A",
-                  secondaryColor: "#3B82F6",
-                  accentColor: "#F59E0B",
+                  primaryColor: "#000000",
+                  secondaryColor: "#FF5A36",
+                  accentColor: "#3B82F6",
                   backgroundColor: "#FFFFFF",
                   textColor: "#0F172A",
-                  headingFont: "Inter",
+                  headingFont: "Montserrat",
                   bodyFont: "Inter",
-                  website: "https://luminacraft.co",
-                  instagramHandle: "@luminacraft",
-                  phone: "+1 (555) 019-2834",
-                  defaultCta: "Shop New Drop",
+                  website: "urbanwear.co",
+                  instagramHandle: "@urbanwear",
+                  facebookHandle: "urbanwear",
+                  tiktokHandle: "@urbanwear",
+                  phone: "+880 1712 345678",
+                  defaultCta: "SHOP NOW",
                   watermarkEnabled: true,
                   watermarkPosition: "BOTTOM_RIGHT",
                   watermarkOpacity: 0.85,
@@ -107,8 +110,8 @@ export async function getOrCreateDefaultWorkspace() {
       await prisma.creditLedger.create({
         data: {
           workspaceId: workspace.id,
-          amount: 50,
-          balanceAfter: 50,
+          amount: 10,
+          balanceAfter: 10,
           type: "SIGNUP_BONUS",
           description: "Welcome credits grant",
         },
@@ -122,10 +125,9 @@ export async function getOrCreateDefaultWorkspace() {
       workspace,
       brand: defaultBrand,
       brandKit: defaultBrand?.brandKit,
-      credits: workspace.creditBalance?.credits ?? 50,
+      credits: workspace.creditBalance?.credits ?? 10,
     };
-  } catch (err) {
-    // If DB is offline (e.g. static build prerender without live Postgres), return fallback workspace
+  } catch {
     const defaultBrand = FALLBACK_WORKSPACE.brands[0];
     return {
       workspace: FALLBACK_WORKSPACE as any,
@@ -135,4 +137,3 @@ export async function getOrCreateDefaultWorkspace() {
     };
   }
 }
-

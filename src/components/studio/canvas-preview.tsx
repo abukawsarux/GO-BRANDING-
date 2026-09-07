@@ -146,6 +146,7 @@ export function CanvasPreview({
             }
 
             if (el.type === "DECORATIVE_SHAPE") {
+              if (overrides?.showBackgroundShape === false) return null;
               const shapeEl = el as DecorativeShapeElement;
               const color = resolveColorToken(
                 shapeEl.colorToken,
@@ -173,6 +174,7 @@ export function CanvasPreview({
             }
 
             if (el.type === "BRAND_LOGO") {
+              if (overrides?.showLogo === false) return null;
               const logoEl = el as BrandLogoElement;
               return (
                 <g
@@ -324,6 +326,13 @@ export function CanvasPreview({
             }
 
             if (el.type === "SOCIAL_FOOTER") {
+              if (
+                overrides?.showSocialHandles === false &&
+                overrides?.showPhoneNumber === false &&
+                overrides?.showWebsite === false
+              ) {
+                return null;
+              }
               const socialEl = el as SocialFooterElement;
               const color = resolveColorToken(
                 socialEl.colorToken,
@@ -334,20 +343,20 @@ export function CanvasPreview({
 
               const itemsToShow: string[] = [];
               for (const item of socialEl.items) {
-                if (item === "website" && brandKit.website) {
+                if (item === "website" && brandKit.website && overrides?.showWebsite !== false) {
                   itemsToShow.push(
                     brandKit.website.replace(/^https?:\/\//, ""),
                   );
-                } else if (item === "instagram" && brandKit.instagramHandle) {
+                } else if (item === "instagram" && brandKit.instagramHandle && overrides?.showSocialHandles !== false) {
                   const handle = brandKit.instagramHandle.startsWith("@")
                     ? brandKit.instagramHandle
                     : `@${brandKit.instagramHandle}`;
                   itemsToShow.push(handle);
-                } else if (item === "facebook" && brandKit.facebookHandle) {
+                } else if (item === "facebook" && brandKit.facebookHandle && overrides?.showSocialHandles !== false) {
                   itemsToShow.push(`fb/${brandKit.facebookHandle}`);
-                } else if (item === "tiktok" && brandKit.tiktokHandle) {
+                } else if (item === "tiktok" && brandKit.tiktokHandle && overrides?.showSocialHandles !== false) {
                   itemsToShow.push(`tiktok/${brandKit.tiktokHandle}`);
-                } else if (item === "phone" && brandKit.phone) {
+                } else if (item === "phone" && brandKit.phone && overrides?.showPhoneNumber !== false) {
                   itemsToShow.push(brandKit.phone);
                 }
               }

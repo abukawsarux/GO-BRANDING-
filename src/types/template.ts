@@ -103,7 +103,7 @@ export interface TextSlotElement extends BaseElement {
 export interface BadgeCtaElement extends BaseElement {
   type: "BADGE_CTA";
   defaultText?: string;
-  bgToken: "accent" | "secondary" | "primary" | "white";
+  bgToken: "accent" | "secondary" | "primary" | "white" | "dark";
   textToken: "white" | "primary" | "dark";
   borderRadius: number;
   paddingX?: number;
@@ -115,7 +115,7 @@ export interface SocialFooterElement extends BaseElement {
   type: "SOCIAL_FOOTER";
   items: ("instagram" | "facebook" | "tiktok" | "website" | "phone")[];
   layout: "horizontal" | "vertical";
-  colorToken: "secondary" | "text" | "primary" | "white";
+  colorToken: "secondary" | "text" | "primary" | "white" | "dark";
   fontSize: number;
   gap?: number;
 }
@@ -123,7 +123,7 @@ export interface SocialFooterElement extends BaseElement {
 export interface DecorativeShapeElement extends BaseElement {
   type: "DECORATIVE_SHAPE";
   shape: "rectangle" | "circle" | "pill" | "line";
-  colorToken: "primary" | "secondary" | "accent" | "white";
+  colorToken: "primary" | "secondary" | "accent" | "white" | "dark";
   customColor?: string;
   borderRadius?: number;
 }
@@ -194,5 +194,10 @@ export interface GenerationOverrides {
   secondaryColor?: string;
   accentColor?: string;
   customImagePosition?: { x: number; y: number; zoom: number };
+  showLogo?: boolean;
+  showSocialHandles?: boolean;
+  showPhoneNumber?: boolean;
+  showWebsite?: boolean;
+  showBackgroundShape?: boolean;
 }
 

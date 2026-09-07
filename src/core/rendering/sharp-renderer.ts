@@ -82,7 +82,7 @@ export async function renderCanvasWithSharp(params: {
     (el) => el.type === "BRAND_LOGO"
   ) as BrandLogoElement | undefined;
 
-  if (logoSlot && logoBuffer && logoBuffer.length > 0) {
+  if (logoSlot && logoBuffer && logoBuffer.length > 0 && overrides?.showLogo !== false) {
     try {
       const resizedLogo = await sharp(logoBuffer)
         .resize(Math.round(logoSlot.width), Math.round(logoSlot.height), {
