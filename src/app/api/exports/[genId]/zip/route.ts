@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import archiver from "archiver";
 import fs from "fs";
 import path from "path";
 import { PassThrough } from "stream";
 import prisma from "@/lib/prisma";
+import { createRequire } from "module";
+
+const nodeRequire = createRequire(import.meta.url);
+const archiver = nodeRequire("archiver");
 
 export async function GET(
   req: NextRequest,

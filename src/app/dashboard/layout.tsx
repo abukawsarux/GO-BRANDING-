@@ -1,6 +1,8 @@
 import { getOrCreateDefaultWorkspace } from "@/core/auth/context";
 import { DashboardHeader } from "@/components/layout/header";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({
   children,
 }: {
