@@ -109,19 +109,24 @@ export function StudioGenerator({
   initialCredits,
 }: StudioGeneratorProps) {
   const [userImageBase64, setUserImageBase64] = useState<string>(
-    SAMPLE_PRESETS[0].dataUrl
+    SAMPLE_PRESETS[0].dataUrl,
   );
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateDefinition>(
-    BUILTIN_TEMPLATES[0]
+    BUILTIN_TEMPLATES[0],
   );
   const [viewMode, setViewMode] = useState<"grid" | "focused">("grid");
-  const [focusedRatio, setFocusedRatio] = useState<AspectRatioKey>("SQUARE_1_1");
+  const [focusedRatio, setFocusedRatio] =
+    useState<AspectRatioKey>("SQUARE_1_1");
 
   const [headline, setHeadline] = useState("Discover Summer Essentials 2026");
-  const [ctaText, setCtaText] = useState(brandKit.defaultCta || "Shop Collection");
+  const [ctaText, setCtaText] = useState(
+    brandKit.defaultCta || "Shop Collection",
+  );
 
   const [isGenerating, setIsGenerating] = useState(false);
-  const [completedGeneration, setCompletedGeneration] = useState<any | null>(null);
+  const [completedGeneration, setCompletedGeneration] = useState<any | null>(
+    null,
+  );
   const [credits, setCredits] = useState(initialCredits);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -247,7 +252,8 @@ export function StudioGenerator({
           “Set your brand once. Brand every content automatically.”
         </h1>
         <p className="text-sm text-slate-500">
-          Upload any photo and instantly generate all social media formats branded with your exact colors, fonts, handles, and watermark.
+          Upload any photo and instantly generate all social media formats
+          branded with your exact colors, fonts, handles, and watermark.
         </p>
       </div>
 
@@ -324,7 +330,8 @@ export function StudioGenerator({
             >
               {isGenerating ? (
                 <>
-                  <RefreshCw className="h-4 w-4 animate-spin" /> Rendering All 4 Formats...
+                  <RefreshCw className="h-4 w-4 animate-spin" /> Rendering All 4
+                  Formats...
                 </>
               ) : (
                 <>
@@ -454,7 +461,8 @@ export function StudioGenerator({
                     disabled={isGenerating}
                     className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
                   >
-                    <Download className="h-3.5 w-3.5 text-slate-500" /> Download {meta.badge} PNG
+                    <Download className="h-3.5 w-3.5 text-slate-500" /> Download{" "}
+                    {meta.badge} PNG
                   </button>
                 </div>
               );
@@ -502,7 +510,7 @@ export function StudioGenerator({
                 brandName={brand.name}
                 zoomLevel={Math.min(
                   1,
-                  460 / selectedTemplate.layouts[focusedRatio].width
+                  460 / selectedTemplate.layouts[focusedRatio].width,
                 )}
               />
             </div>
@@ -520,7 +528,8 @@ export function StudioGenerator({
                 All 4 Formats Successfully Generated!
               </h4>
               <p className="text-xs text-slate-600">
-                Your ZIP bundle download has started. You can also re-download any format from History.
+                Your ZIP bundle download has started. You can also re-download
+                any format from History.
               </p>
             </div>
           </div>
