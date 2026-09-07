@@ -21,8 +21,6 @@ import {
   CheckCircle2,
   RefreshCw,
   LayoutGrid,
-  Square,
-  Smartphone,
   Maximize2,
   ArrowRight,
   ShieldCheck,
@@ -40,7 +38,6 @@ interface StudioGeneratorProps {
   initialCredits: number;
 }
 
-// Crisp base64 sample textures so the user sees live branded outputs immediately
 const SAMPLE_PRESETS = [
   {
     id: "apparel",
@@ -111,28 +108,20 @@ export function StudioGenerator({
   brandKit,
   initialCredits,
 }: StudioGeneratorProps) {
-  // Pre-load first sample so the user instantly sees the branded experience!
   const [userImageBase64, setUserImageBase64] = useState<string>(
-    SAMPLE_PRESETS[0].dataUrl,
+    SAMPLE_PRESETS[0].dataUrl
   );
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateDefinition>(
-    BUILTIN_TEMPLATES[0],
+    BUILTIN_TEMPLATES[0]
   );
   const [viewMode, setViewMode] = useState<"grid" | "focused">("grid");
-  const [focusedRatio, setFocusedRatio] =
-    useState<AspectRatioKey>("SQUARE_1_1");
+  const [focusedRatio, setFocusedRatio] = useState<AspectRatioKey>("SQUARE_1_1");
 
-  // Simple copy controls
   const [headline, setHeadline] = useState("Discover Summer Essentials 2026");
-  const [ctaText, setCtaText] = useState(
-    brandKit.defaultCta || "Shop Collection",
-  );
+  const [ctaText, setCtaText] = useState(brandKit.defaultCta || "Shop Collection");
 
-  // Action status
   const [isGenerating, setIsGenerating] = useState(false);
-  const [completedGeneration, setCompletedGeneration] = useState<any | null>(
-    null,
-  );
+  const [completedGeneration, setCompletedGeneration] = useState<any | null>(null);
   const [credits, setCredits] = useState(initialCredits);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -172,7 +161,6 @@ export function StudioGenerator({
         setCompletedGeneration(res.data);
         setCredits((c) => Math.max(0, c - 1));
 
-        // Trigger download of the ZIP bundle automatically!
         const zipUrl = `/api/exports/${res.data.id}/zip`;
         const link = document.createElement("a");
         link.href = zipUrl;
@@ -253,18 +241,17 @@ export function StudioGenerator({
         </Link>
       </div>
 
-      {/* 2. Hero USP & Upload Bar */}
+      {/* 2. Hero USP */}
       <div className="text-center max-w-3xl mx-auto pt-2 pb-4 space-y-2">
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
           “Set your brand once. Brand every content automatically.”
         </h1>
         <p className="text-sm text-slate-500">
-          Upload any photo and instantly generate all social media formats
-          branded with your exact colors, fonts, handles, and watermark.
+          Upload any photo and instantly generate all social media formats branded with your exact colors, fonts, handles, and watermark.
         </p>
       </div>
 
-      {/* 3. Streamlined Control Bar: Upload, Template, and Copy Inputs */}
+      {/* 3. Streamlined Control Bar: Upload, Template, and Actions */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
           {/* A. Upload / Sample button (4 cols) */}
@@ -284,7 +271,6 @@ export function StudioGenerator({
                 />
               </label>
             </div>
-            {/* Quick Presets */}
             <div className="flex items-center gap-1.5 pt-1">
               <span className="text-[11px] text-slate-400">Samples:</span>
               {SAMPLE_PRESETS.map((sample) => (
@@ -338,8 +324,7 @@ export function StudioGenerator({
             >
               {isGenerating ? (
                 <>
-                  <RefreshCw className="h-4 w-4 animate-spin" /> Rendering All 4
-                  Formats...
+                  <RefreshCw className="h-4 w-4 animate-spin" /> Rendering All 4 Formats...
                 </>
               ) : (
                 <>
@@ -350,7 +335,7 @@ export function StudioGenerator({
           </div>
         </div>
 
-        {/* Quick Inline Headline & CTA Inputs */}
+        {/* Inline Headline & CTA Inputs */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-100">
           <div>
             <label className="block text-[11px] font-semibold text-slate-500 uppercase mb-1">
@@ -429,8 +414,6 @@ export function StudioGenerator({
             {ratios.map((ratioKey) => {
               const meta = ASPECT_RATIOS[ratioKey];
               const layout = selectedTemplate.layouts[ratioKey];
-
-              // Target preview box width
               const previewBoxWidth = 260;
               const zoom = previewBoxWidth / layout.width;
 
@@ -454,7 +437,6 @@ export function StudioGenerator({
                       </span>
                     </div>
 
-                    {/* Canvas Preview Container */}
                     <div className="rounded-xl bg-slate-100/60 p-2 flex items-center justify-center overflow-hidden min-h-[300px]">
                       <CanvasPreview
                         layout={layout}
@@ -472,8 +454,7 @@ export function StudioGenerator({
                     disabled={isGenerating}
                     className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
                   >
-                    <Download className="h-3.5 w-3.5 text-slate-500" /> Download{" "}
-                    {meta.badge} PNG
+                    <Download className="h-3.5 w-3.5 text-slate-500" /> Download {meta.badge} PNG
                   </button>
                 </div>
               );
@@ -521,7 +502,7 @@ export function StudioGenerator({
                 brandName={brand.name}
                 zoomLevel={Math.min(
                   1,
-                  460 / selectedTemplate.layouts[focusedRatio].width,
+                  460 / selectedTemplate.layouts[focusedRatio].width
                 )}
               />
             </div>
@@ -529,7 +510,7 @@ export function StudioGenerator({
         )}
       </div>
 
-      {/* 5. Completed Export Alert if ready */}
+      {/* 5. Completed Export Alert */}
       {completedGeneration && (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -539,8 +520,7 @@ export function StudioGenerator({
                 All 4 Formats Successfully Generated!
               </h4>
               <p className="text-xs text-slate-600">
-                Your ZIP bundle download has started. You can also re-download
-                any format from History.
+                Your ZIP bundle download has started. You can also re-download any format from History.
               </p>
             </div>
           </div>
