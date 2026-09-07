@@ -28,16 +28,28 @@ export default function HomePage() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-400">
-            <Link href="/dashboard/studio" className="hover:text-white transition-colors">
+            <Link
+              href="/dashboard/studio"
+              className="hover:text-white transition-colors"
+            >
               Studio
             </Link>
-            <Link href="/dashboard/brand" className="hover:text-white transition-colors">
+            <Link
+              href="/dashboard/brand"
+              className="hover:text-white transition-colors"
+            >
               Brand Kit
             </Link>
-            <Link href="/dashboard/templates" className="hover:text-white transition-colors">
+            <Link
+              href="/dashboard/templates"
+              className="hover:text-white transition-colors"
+            >
               Templates
             </Link>
-            <Link href="/dashboard/history" className="hover:text-white transition-colors">
+            <Link
+              href="/dashboard/history"
+              className="hover:text-white transition-colors"
+            >
               History
             </Link>
           </nav>
@@ -63,7 +75,8 @@ export default function HomePage() {
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center space-y-7">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-xs font-semibold text-blue-400">
-            <Zap className="h-3.5 w-3.5" /> Content Automation & Brand Consistency
+            <Zap className="h-3.5 w-3.5" /> Content Automation & Brand
+            Consistency
           </div>
 
           {/* Core USP Headline */}
@@ -75,8 +88,9 @@ export default function HomePage() {
           </h1>
 
           <p className="mx-auto max-w-2xl text-base sm:text-lg text-slate-400 leading-relaxed">
-            Stop manually styling posts in Canva. Configure your brand colors, fonts, logo, and watermark once.
-            Upload any image and instantly get all social media formats ready to publish.
+            Stop manually styling posts in Canva. Configure your brand colors,
+            fonts, logo, and watermark once. Upload any image and instantly get
+            all social media formats ready to publish.
           </p>
 
           {/* Action Buttons */}
@@ -102,7 +116,8 @@ export default function HomePage() {
                 <ImageIcon className="h-4 w-4" /> Image → Content
               </div>
               <p className="text-xs text-slate-400">
-                Turn any raw product shot into 4 branded social media formats in &lt;1 second.
+                Turn any raw product shot into 4 branded social media formats in
+                &lt;1 second.
               </p>
             </div>
 
@@ -111,7 +126,8 @@ export default function HomePage() {
                 <Video className="h-4 w-4" /> Video → Branded
               </div>
               <p className="text-xs text-slate-400">
-                Overlay lower-thirds, watermarks, and brand frames on reels & TikToks automatically.
+                Overlay lower-thirds, watermarks, and brand frames on reels &
+                TikToks automatically.
               </p>
             </div>
 
@@ -120,7 +136,8 @@ export default function HomePage() {
                 <Layers className="h-4 w-4" /> Multi-Format
               </div>
               <p className="text-xs text-slate-400">
-                Square (1:1), Stories (9:16), Portrait (4:5), and Banners (16:9) in one click.
+                Square (1:1), Stories (9:16), Portrait (4:5), and Banners (16:9)
+                in one click.
               </p>
             </div>
 
@@ -129,7 +146,8 @@ export default function HomePage() {
                 <ShieldCheck className="h-4 w-4" /> Brand Shield
               </div>
               <p className="text-xs text-slate-400">
-                Consistent colors, typography, handles, and watermarks across your entire team.
+                Consistent colors, typography, handles, and watermarks across
+                your entire team.
               </p>
             </div>
           </div>
@@ -153,9 +171,12 @@ export default function HomePage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold">
                 1
               </div>
-              <h3 className="text-base font-bold text-white">Configure Brand Kit Once</h3>
+              <h3 className="text-base font-bold text-white">
+                Configure Brand Kit Once
+              </h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Add your logo, color palette, heading font, social handles (@instagram, website, phone), and watermark position.
+                Add your logo, color palette, heading font, social handles
+                (@instagram, website, phone), and watermark position.
               </p>
             </div>
 
@@ -163,9 +184,12 @@ export default function HomePage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold">
                 2
               </div>
-              <h3 className="text-base font-bold text-white">Upload Your Content</h3>
+              <h3 className="text-base font-bold text-white">
+                Upload Your Content
+              </h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Drop your photo or product image. BrandFlow automatically binds it into your layout with exact brand styling.
+                Drop your photo or product image. BrandFlow automatically binds
+                it into your layout with exact brand styling.
               </p>
             </div>
 
@@ -173,9 +197,12 @@ export default function HomePage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20 font-bold">
                 3
               </div>
-              <h3 className="text-base font-bold text-white">Download All Formats (ZIP)</h3>
+              <h3 className="text-base font-bold text-white">
+                Download All Formats (ZIP)
+              </h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Sharp composites all 4 resolutions server-side in under 1 second. Download individually or as a single ZIP bundle.
+                Sharp composites all 4 resolutions server-side in under 1
+                second. Download individually or as a single ZIP bundle.
               </p>
             </div>
           </div>
